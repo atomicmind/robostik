@@ -15,39 +15,56 @@ except (ImportError, SyntaxError):
 
 
 def parse_choregraphe_project(project_path: str) -> List[Dict]:
-    """Parsira Choregraphe projekt (.pml) in vrne seznam behaviourjev"""
+    """Parsira Choregraphe projekt (.pml) in vrne seznam behaviourjev.
+
+    Najprej poišče <BehaviorDescription> elemente v .pml (novejši/standardni način),
+    če jih ni, pa poišče poljubne <Box> elemente kot fallback.
+    Vrne seznam dict-ov: { 'name': ..., 'id': ..., 'path': ... }
+    """
     behaviors = []
-    
+    seen = set()
+
     if not os.path.exists(project_path):
         return behaviors
-    
+
     # Najdi .pml datoteko (Choregraphe project file)
     pml_files = [f for f in os.listdir(project_path) if f.endswith('.pml')]
-    
+
     if not pml_files:
         return behaviors
-    
+
     pml_file = os.path.join(project_path, pml_files[0])
-    
+
     try:
         tree = ET.parse(pml_file)
         root = tree.getroot()
-        
-        # Parsira "Diagram" elemente (behaviourji)
-        for box in root.findall('.//Box'):
-            name = box.get('name', 'Unknown')
-            id_attr = box.get('id', '')
-            
-            # Preskoči manifest in internalne boxe
-            if name != 'manifest' and not name.startswith('__'):
-                behaviors.append({
-                    'name': name,
-                    'id': id_attr,
-                    'path': os.path.join(project_path, name)
-                })
+
+        # Preferiraj BehaviorDescription elemente (v %Package%/BehaviorDescriptions)
+        for bdesc in root.findall('.//BehaviorDescription'):
+            name = bdesc.get('name') or bdesc.get('id') or 'Unknown'
+            src = bdesc.get('src') or ''
+            path = os.path.join(project_path, src) if src else os.path.join(project_path, name)
+            if name and name not in seen:
+                behaviors.append({'name': name, 'id': bdesc.get('id', ''), 'path': path})
+                seen.add(name)
+
+        # Če nismo našli ničesar, uporabimo Box elemente kot fallback
+        if not behaviors:
+            for box in root.findall('.//Box'):
+                name = box.get('name', 'Unknown')
+                id_attr = box.get('id', '')
+
+                # Preskoči manifest in internalne boxe
+                if name != 'manifest' and not name.startswith('__') and name not in seen:
+                    behaviors.append({
+                        'name': name,
+                        'id': id_attr,
+                        'path': os.path.join(project_path, name)
+                    })
+                    seen.add(name)
     except Exception as e:
         print(f"Napaka pri parsiranju .pml datoteke: {e}")
-    
+
     return behaviors
 
 
