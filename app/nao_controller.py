@@ -68,26 +68,32 @@ def parse_choregraphe_project(project_path: str) -> List[Dict]:
 
 
 def _parse_xar_file(xar_path: str, behavior_dir: str) -> List[Dict]:
-    """Ekstrahiraj i parsiraj Box elemente iz .xar XML datoteke"""
+    """Ekstrahiraj i parsiraj Box elemente iz .xar XML datoteke (sa namespace podrskom)"""
     behaviors = []
     
     try:
-        # .xar je XML datoteka (nije ZIP)
+        # .xar je XML datoteka (Choregraphe project)
         tree = ET.parse(xar_path)
         root = tree.getroot()
         
-        # Parsiraj root-level Box elemente (behaviors u Diagramu)
-        for box in root.findall('.//Box'):
-            name = box.get('name', '').strip()
-            id_attr = box.get('id', '')
-            
-            # Preskoči manifest i internalne boxe
-            if name and name.lower() != 'manifest' and not name.startswith('__'):
-                behaviors.append({
-                    'name': name,
-                    'id': id_attr,
-                    'path': os.path.join(behavior_dir, name)
-                })
+        # Registriraj Choregraphe namespace
+        ns = {'ch': 'http://www.ald.softbankrobotics.com/schema/choregraphe/project.xsd'}
+        
+        # Traži samo Box elemente koji su direktne dijete Diagram elementa (top-level behaviors)
+        diagrams = root.findall('.//ch:Diagram', ns)
+        for diagram in diagrams:
+            # Direktne dijete BoxSection / Box
+            for box in diagram.findall('ch:BoxSection/ch:Box', ns):
+                name = box.get('name', '').strip()
+                id_attr = box.get('id', '')
+                
+                # Preskoči root i internalne boxe
+                if name and name.lower() != 'root' and not name.startswith('__'):
+                    behaviors.append({
+                        'name': name,
+                        'id': id_attr,
+                        'path': os.path.join(behavior_dir, name)
+                    })
     except Exception as e:
         print(f"Napaka pri parsiranju .xar datoteke: {e}")
     
