@@ -6,7 +6,18 @@ REST API endpoint-i za upravljanje NAO robota
 from flask import Blueprint, jsonify, render_template, request
 from app.nao_controller import get_nao_controller
 
-# Ustvari blueprint
+
+# Ustvari blueprint za root (templates)
+root_bp = Blueprint('root', __name__)
+
+
+@root_bp.route('/', methods=['GET'])
+def home():
+    """Vrne spletni vmesnik"""
+    return render_template('index.html')
+
+
+# Ustvari blueprint za API
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 

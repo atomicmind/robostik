@@ -17,7 +17,8 @@ def create_app():
     CORS(app)
     
     # Registriraj blueprint-e
-    from app.routes import api_bp
+    from app.routes import root_bp, api_bp
+    app.register_blueprint(root_bp)
     app.register_blueprint(api_bp)
     
     return app
