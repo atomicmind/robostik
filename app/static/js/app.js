@@ -79,9 +79,11 @@ async function checkStatus() {
 
 /**
  * Skeniraj behaviors iz izbrane mape
+ * Sprejme opcijski parameter folderPathParam, da lahko kličemo funkcijo programatično
  */
-async function scanBehaviors() {
-    const folderPath = document.getElementById('folderPath').value.trim();
+async function scanBehaviors(folderPathParam = null) {
+    const folderInputElem = document.getElementById('folderPath');
+    const folderPath = (folderPathParam || (folderInputElem ? folderInputElem.value : '')).trim();
     
     if (!folderPath) {
         addLog('Vnesite pot do projekta', 'error');
@@ -89,8 +91,10 @@ async function scanBehaviors() {
     }
     
     const scanBtn = document.getElementById('scanBtn');
-    scanBtn.disabled = true;
-    scanBtn.textContent = '⏳ Skeniram...'; // used when invoked programmatically while scanning behaviours
+    if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = '⏳ Skeniram...'; // used when invoked programmatically while scanning behaviours
+    }
     
     try {
         const response = await fetch(`${API_BASE}/scan-folder`, {
@@ -105,21 +109,25 @@ async function scanBehaviors() {
         
         if (data.success) {
             currentFolderPath = data.path;
+            // update input if called programmatically
+            if (folderInputElem) folderInputElem.value = data.path;
             displayBehaviors(data.behaviors);
             addLog(`✓ Naloženih ${data.behaviors.length} behaviourjev`, 'success');
         } else {
             addLog(`✗ Napaka: ${data.message}`, 'error');
-            document.getElementById('behaviours-container').innerHTML = 
-                `<p class="loading">❌ ${data.message}</p>`;
+            const container = document.getElementById('behaviours-container');
+            if (container) container.innerHTML = `<p class="loading">❌ ${data.message}</p>`;
         }
     } catch (error) {
         console.error('Napaka pri skeniranju:', error);
         addLog('Napaka pri skeniranju behaviourjev', 'error');
-        document.getElementById('behaviours-container').innerHTML = 
-            '<p class="loading">❌ Napaka pri povezavi s strežnikom</p>';
+        const container = document.getElementById('behaviours-container');
+        if (container) container.innerHTML = '<p class="loading">❌ Napaka pri povezavi s strežnikom</p>';
     } finally {
-        scanBtn.disabled = false;
-        scanBtn.textContent = '📁 Odpri projekt';
+        if (scanBtn) {
+            scanBtn.disabled = false;
+            scanBtn.textContent = '📁 Odpri projekt';
+        }
     }
 }
 
@@ -164,7 +172,7 @@ async function openProjectDialog() {
             }
             addLog(`✓ Izbrana mapa: ${data.path}`, 'success');
             // Po izbiri avtomatsko skeniraj behaviourje
-            await scanBehaviors();
+            await scanBehaviors(data.path);
         } else {
             addLog(`✗ ${data.message}`, 'error');
         }
