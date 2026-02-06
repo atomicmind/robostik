@@ -76,6 +76,11 @@ header {
     transform: scaleY(0.5);
 }
 
+/* Ensure baked reflection images don't get generated reflection */
+.qualia-logo.with-baked-reflection::after {
+    display: none !important;
+}
+
 @keyframes float {
     0%, 100% {
         transform: translateY(0px);
