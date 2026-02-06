@@ -68,34 +68,26 @@ def parse_choregraphe_project(project_path: str) -> List[Dict]:
 
 
 def _parse_xar_file(xar_path: str, behavior_dir: str) -> List[Dict]:
-    """Ekstrahiraj i parsiraj Box elemente iz .xar ZIP datoteke"""
+    """Ekstrahiraj i parsiraj Box elemente iz .xar XML datoteke"""
     behaviors = []
     
     try:
-        # .xar je ZIP datoteka
-        with zipfile.ZipFile(xar_path, 'r') as zf:
-            # Traži .pml datoteke u ZIP-u
-            pml_files = [f for f in zf.namelist() if f.endswith('.pml')]
-            if not pml_files:
-                return behaviors
+        # .xar je XML datoteka (nije ZIP)
+        tree = ET.parse(xar_path)
+        root = tree.getroot()
+        
+        # Parsiraj root-level Box elemente (behaviors u Diagramu)
+        for box in root.findall('.//Box'):
+            name = box.get('name', '').strip()
+            id_attr = box.get('id', '')
             
-            pml_name = pml_files[0]
-            with zf.open(pml_name) as pml_file:
-                tree = ET.parse(pml_file)
-                root = tree.getroot()
-                
-                # Parsiraj root-level Box elemente (behaviors u Diagramu)
-                for box in root.findall('.//Box'):
-                    name = box.get('name', '').strip()
-                    id_attr = box.get('id', '')
-                    
-                    # Preskoči manifest i internalne boxe
-                    if name and name.lower() != 'manifest' and not name.startswith('__'):
-                        behaviors.append({
-                            'name': name,
-                            'id': id_attr,
-                            'path': os.path.join(behavior_dir, name)
-                        })
+            # Preskoči manifest i internalne boxe
+            if name and name.lower() != 'manifest' and not name.startswith('__'):
+                behaviors.append({
+                    'name': name,
+                    'id': id_attr,
+                    'path': os.path.join(behavior_dir, name)
+                })
     except Exception as e:
         print(f"Napaka pri parsiranju .xar datoteke: {e}")
     
