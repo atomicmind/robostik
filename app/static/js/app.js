@@ -171,8 +171,15 @@ async function openProjectDialog() {
                 folderInput.value = data.path;
             }
             addLog(`✓ Izbrana mapa: ${data.path}`, 'success');
-            // Po izbiri avtomatsko skeniraj behaviourje
-            await scanBehaviors(data.path);
+
+            // Če backend že vrača behaviourje, jih prikažemo takoj; sicer sprožimo skeniranje
+            if (data.behaviors && Array.isArray(data.behaviors)) {
+                currentFolderPath = data.path;
+                displayBehaviors(data.behaviors);
+                addLog(`✓ Naloženih ${data.behaviors.length} behaviourjev (server-side)`, 'success');
+            } else {
+                await scanBehaviors(data.path);
+            }
         } else {
             addLog(`✗ ${data.message}`, 'error');
         }

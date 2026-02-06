@@ -114,7 +114,10 @@ def scan_folder():
 
 @api_bp.route('/open-project', methods=['GET'])
 def open_project_dialog():
-    """Odpre nativni file dialog (zenity/kdialog) za izbiro mape na lokalnem sistemu"""
+    """Odpre nativni file dialog (zenity/kdialog) za izbiro mape na lokalnem sistemu
+    Po izbiri tudi skenira projekt (poskusi .pml parser, nato fallback na scan directory)
+    in vrne seznam najdenih behaviourjev v odgovoru.
+    """
     # Preveri, kateri dialog je na voljo
     dialog_cmd = None
     if shutil.which('zenity'):
@@ -132,6 +135,13 @@ def open_project_dialog():
             return jsonify({"success": False, "message": "Izbira preklicana"}), 400
         if not os.path.exists(selected):
             return jsonify({"success": False, "message": f"Izbrana pot ne obstaja: {selected}"}), 400
-        return jsonify({"success": True, "path": selected})
+
+        # Skeniraj projekt na strežniku
+        behaviors = parse_choregraphe_project(selected)
+        if not behaviors:
+            dir_behaviors = scan_behaviors_in_directory(selected)
+            behaviors = [{'name': b, 'path': os.path.join(selected, b)} for b in dir_behaviors]
+
+        return jsonify({"success": True, "path": selected, "behaviors": behaviors})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
