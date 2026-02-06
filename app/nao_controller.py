@@ -47,7 +47,22 @@ def parse_choregraphe_project(project_path: str) -> List[Dict]:
                         'path': os.path.join(project_path, src)
                     })
 
-        # 2) Parsira "Box" elemente (diagram nodes) kot dodatne behaviourje
+        # 2) Parsira "Resources/File" elemente za .crg/.xar kot možne behaviourje
+        for file_elem in root.findall('.//Resources/File'):
+            src = file_elem.get('src') or ''
+            name = file_elem.get('name') or ''
+            lower = src.lower()
+            if lower.endswith('.crg') or lower.endswith('.xar') or 'behavior' in lower:
+                # Uporabimo name, če obstaja, sicer filename
+                display_name = name or os.path.splitext(os.path.basename(src))[0]
+                if display_name and display_name not in [b['name'] for b in behaviors]:
+                    behaviors.append({
+                        'name': display_name,
+                        'id': '',
+                        'path': os.path.join(project_path, src)
+                    })
+
+        # 3) Parsira "Box" elemente (diagram nodes) kot dodatne behaviourje
         for box in root.findall('.//Box'):
             name = box.get('name', '').strip()
             id_attr = box.get('id', '')
