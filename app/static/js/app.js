@@ -6,6 +6,7 @@
 const API_BASE = '/api';
 let behaviourRunning = {};
 let currentFolderPath = '';
+let projectModal = null;
 
 /**
  * Inicijalizacija aplikacije
@@ -13,23 +14,39 @@ let currentFolderPath = '';
 document.addEventListener('DOMContentLoaded', function() {
     console.log('RoboStik aplikacija zagnana');
     
-    // Nastavi default folder path
-    const folderInput = document.getElementById('folderPath');
-    if (folderInput) {
-        folderInput.value = '/home/atomicmind/tehno/nao/arni/test/';
+    // Modal inicijalizacija
+    projectModal = document.getElementById('projectModal');
+    const pickProjectBtn = document.getElementById('pickProjectBtn');
+    const closeModal = document.getElementById('closeModal');
+    const confirmProjectBtn = document.getElementById('confirmProjectBtn');
+    const projectPathInput = document.getElementById('projectPath');
+    
+    // Modal event listeners
+    if (pickProjectBtn) {
+        pickProjectBtn.addEventListener('click', openProjectModal);
     }
     
-    // Gumb za skeniranje
-    const scanBtn = document.getElementById('scanBtn');
-    if (scanBtn) {
-        scanBtn.addEventListener('click', scanBehaviors);
+    if (closeModal) {
+        closeModal.addEventListener('click', closeProjectModal);
     }
     
-    // Enter v input polju
-    if (folderInput) {
-        folderInput.addEventListener('keypress', function(e) {
+    if (confirmProjectBtn) {
+        confirmProjectBtn.addEventListener('click', confirmProject);
+    }
+    
+    if (projectPathInput) {
+        projectPathInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                scanBehaviors();
+                confirmProject();
+            }
+        });
+    }
+    
+    // Zapri modal s klikom na ozadje
+    if (projectModal) {
+        projectModal.addEventListener('click', function(e) {
+            if (e.target === projectModal) {
+                closeProjectModal();
             }
         });
     }
@@ -40,6 +57,79 @@ document.addEventListener('DOMContentLoaded', function() {
     // Osveži vsakih 5 sekund
     setInterval(checkStatus, 5000);
 });
+
+/**
+ * Odpri modal za izbor projekta
+ */
+function openProjectModal() {
+    if (projectModal) {
+        projectModal.classList.add('show');
+        const input = document.getElementById('projectPath');
+        if (input) {
+            input.value = currentFolderPath || '/home/atomicmind/tehno/nao/arni/test/';
+            input.focus();
+        }
+        loadRecentProjects();
+    }
+}
+
+/**
+ * Zapri modal
+ */
+function closeProjectModal() {
+    if (projectModal) {
+        projectModal.classList.remove('show');
+    }
+}
+
+/**
+ * Naloži recent projekte
+ */
+function loadRecentProjects() {
+    const recentProjects = [
+        '/home/atomicmind/tehno/nao/arni/test/',
+        '/home/atomicmind/APPS/nao/choregraphe/behaviors/',
+        '/home/atomicmind/nao/project/'
+    ];
+    
+    const projectList = document.getElementById('projectList');
+    if (projectList) {
+        projectList.innerHTML = '';
+        recentProjects.forEach(proj => {
+            const div = document.createElement('div');
+            div.className = 'project-item';
+            div.textContent = proj;
+            div.addEventListener('click', function() {
+                const input = document.getElementById('projectPath');
+                if (input) {
+                    input.value = proj;
+                    input.focus();
+                }
+            });
+            projectList.appendChild(div);
+        });
+    }
+}
+
+/**
+ * Potrdi izbrani projekt in naloži behaviourje
+ */
+function confirmProject() {
+    const input = document.getElementById('projectPath');
+    if (!input || !input.value.trim()) {
+        alert('Prosimo, vnesite pot do projekta');
+        return;
+    }
+    
+    currentFolderPath = input.value.trim();
+    const folderInput = document.getElementById('folderPath');
+    if (folderInput) {
+        folderInput.value = currentFolderPath;
+    }
+    
+    closeProjectModal();
+    scanBehaviors();
+}
 
 /**
  * Preveri stanje povezave z robotom
@@ -88,9 +178,11 @@ async function scanBehaviors() {
         return;
     }
     
-    const scanBtn = document.getElementById('scanBtn');
-    scanBtn.disabled = true;
-    scanBtn.textContent = '⏳ Skeniram...';
+    const pickBtn = document.getElementById('pickProjectBtn');
+    if (pickBtn) {
+        pickBtn.disabled = true;
+        pickBtn.textContent = '⏳ Skeniram...';
+    }
     
     try {
         const response = await fetch(`${API_BASE}/scan-folder`, {
@@ -118,8 +210,10 @@ async function scanBehaviors() {
         document.getElementById('behaviours-container').innerHTML = 
             '<p class="loading">❌ Napaka pri povezavi s strežnikom</p>';
     } finally {
-        scanBtn.disabled = false;
-        scanBtn.textContent = '🔍 Skeniraj behaviourje';
+        if (pickBtn) {
+            pickBtn.disabled = false;
+            pickBtn.textContent = '📂 Izberi projekt';
+        }
     }
 }
 
