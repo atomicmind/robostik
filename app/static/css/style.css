@@ -209,6 +209,8 @@ section h2 {
     text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
 }
 
 .behaviour-card:hover {
@@ -224,15 +226,26 @@ section h2 {
     word-break: break-word;
 }
 
+.behaviour-card > div {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: auto;
+}
+
 .behaviour-card button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
+    width: 50px;
+    height: 50px;
+    padding: 0;
     border: none;
-    border-radius: 5px;
+    border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
 }
 
 .btn-start {

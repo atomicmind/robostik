@@ -206,17 +206,23 @@ function createBehaviourCard(behaviour) {
     
     const startBtn = document.createElement('button');
     startBtn.className = 'btn-start';
-    startBtn.textContent = '▶ Zaženi';
+    startBtn.textContent = '▶';
+    startBtn.title = 'Zaženi';
     startBtn.onclick = () => startBehaviour(behaviour, startBtn);
     
     const stopBtn = document.createElement('button');
     stopBtn.className = 'btn-stop';
-    stopBtn.textContent = '⏹ Ustavi';
+    stopBtn.textContent = '⏹';
+    stopBtn.title = 'Ustavi';
     stopBtn.onclick = () => stopBehaviour(behaviour, stopBtn);
     
+    // Omotaj buttone u div za side-by-side layout
+    const buttonsWrapper = document.createElement('div');
+    buttonsWrapper.appendChild(startBtn);
+    buttonsWrapper.appendChild(stopBtn);
+    
     card.appendChild(title);
-    card.appendChild(startBtn);
-    card.appendChild(stopBtn);
+    card.appendChild(buttonsWrapper);
     
     return card;
 }
