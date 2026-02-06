@@ -43,26 +43,12 @@ header {
 }
 
 .qualia-logo {
-    width: 140px;
-    height: 140px;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    width: 160px;
+    height: auto;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
     animation: float 3s ease-in-out infinite;
     position: relative;
     z-index: 1;
-}
-
-.qualia-logo::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
-    opacity: 0.4;
-    border-radius: 50%;
-    filter: blur(8px);
-    transform: scaleY(0.5);
 }
 
 @keyframes float {
@@ -70,180 +56,14 @@ header {
         transform: translateY(0px);
     }
     50% {
-        transform: translateY(-10px);
+        transform: translateY(-8px);
     }
+}
 
 .header-text {
     text-align: center;
 }
 
-
-    /* Modal Dialog */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        animation: fadeIn 0.3s ease;
-    }
-
-    .modal.show {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .modal-content {
-        background-color: white;
-        padding: 0;
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        max-width: 500px;
-        width: 90%;
-        animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-        from {
-            transform: translateY(-50px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .modal-header h2 {
-        margin: 0;
-        font-size: 1.5em;
-    }
-
-    .modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 2em;
-        cursor: pointer;
-        padding: 0;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s;
-    }
-
-    .modal-close:hover {
-        transform: scale(1.2);
-    }
-
-    .modal-body {
-        padding: 30px;
-    }
-
-    .modal-info {
-        margin-bottom: 15px;
-        color: #555;
-        font-size: 0.95em;
-    }
-
-    .modal-input {
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 20px;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        font-size: 1em;
-        font-family: 'Courier New', monospace;
-        transition: border-color 0.2s;
-    }
-
-    .modal-input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
-    }
-
-    .project-list {
-        max-height: 200px;
-        overflow-y: auto;
-        margin-bottom: 15px;
-    }
-
-    .project-item {
-        padding: 10px;
-        margin: 5px 0;
-        background: #f5f5f5;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
-    }
-
-    .project-item:hover {
-        background: #e8e8ff;
-        border-left-color: #667eea;
-    }
-
-    .modal-footer {
-        padding: 20px 30px;
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-        border-top: 1px solid #eee;
-    }
-
-    .btn-primary {
-        padding: 12px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-secondary {
-        padding: 12px 20px;
-        background: #f0f0f0;
-        color: #333;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-secondary:hover {
-        background: #e8e8e8;
-        border-color: #667eea;
-    }
 header h1 {
     font-size: 2.5em;
     margin-bottom: 10px;
@@ -375,24 +195,39 @@ section h2 {
 
 .behaviour-card button {
     width: 100%;
-    perspective: 1000px;
-    animation: float 3s ease-in-out infinite;
+    padding: 10px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.qualia-logo {
-    width: 120px;
-    height: 120px;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
-    animation: inherit;
+.btn-start {
+    background-color: #28a745;
+    color: white;
 }
 
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
+.btn-start:hover {
+    background-color: #218838;
+}
+
+.btn-stop {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-stop:hover {
+    background-color: #c82333;
+}
+
+.btn-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Log */
 .log-container {
     background: #f5f5f5;
     border: 1px solid #ddd;
