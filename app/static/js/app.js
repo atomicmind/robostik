@@ -52,6 +52,11 @@ async function checkStatus() {
         const statusBox = document.getElementById('status-box');
         const statusText = document.getElementById('status-text');
         
+        if (!statusBox || !statusText) {
+            console.error('Status elementi niso najdeni');
+            return;
+        }
+        
         if (data.connected) {
             statusBox.classList.remove('disconnected');
             statusBox.classList.add('connected');
@@ -64,8 +69,11 @@ async function checkStatus() {
     } catch (error) {
         console.error('Napaka pri preverjanju statusa:', error);
         const statusBox = document.getElementById('status-box');
-        statusBox.classList.add('disconnected');
-        statusBox.getElementById('status-text').textContent = '✗ Napaka pri povezavi s strežnikom';
+        const statusText = document.getElementById('status-text');
+        if (statusBox && statusText) {
+            statusBox.classList.add('disconnected');
+            statusText.textContent = '✗ Napaka pri povezavi s strežnikom';
+        }
     }
 }
 
@@ -128,7 +136,9 @@ function displayBehaviors(behaviors) {
     }
     
     behaviors.forEach(behavior => {
-        const card = createBehaviourCard(behavior);
+        // Behavior je lahko string ali object
+        const name = typeof behavior === 'string' ? behavior : behavior.name;
+        const card = createBehaviourCard(name);
         container.appendChild(card);
     });
 }

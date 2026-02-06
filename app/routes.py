@@ -5,7 +5,7 @@ REST API endpoint-i za upravljanje NAO robota
 
 from flask import Blueprint, jsonify, render_template, request
 import os
-from app.nao_controller import get_nao_controller, scan_behaviors_in_directory
+from app.nao_controller import get_nao_controller, parse_choregraphe_project, scan_behaviors_in_directory
 
 
 # Ustvari blueprint za root (templates)
@@ -75,7 +75,7 @@ def stop_behaviour(behaviour_name):
 
 @api_bp.route('/scan-folder', methods=['POST'])
 def scan_folder():
-    """Skenira mapico in najde behaviourje"""
+    """Skenira Choregraphe projekt in najde behaviourje"""
     data = request.get_json()
     folder_path = data.get('path', '')
     
@@ -94,8 +94,13 @@ def scan_folder():
             "behaviors": []
         }), 404
     
-    # Skeni behaviourje
-    behaviors = scan_behaviors_in_directory(folder_path)
+    # Poskusi parsirati Choregraphe projekt (.pml)
+    behaviors = parse_choregraphe_project(folder_path)
+    
+    # Če ni behaviourjev iz .pml, skeni direktorije
+    if not behaviors:
+        dir_behaviors = scan_behaviors_in_directory(folder_path)
+        behaviors = [{'name': b, 'path': os.path.join(folder_path, b)} for b in dir_behaviors]
     
     return jsonify({
         "success": True,

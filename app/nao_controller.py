@@ -3,31 +3,67 @@ NAO Controller - Upravljanje NAO robota prek NAOqi SDK
 """
 
 import os
+import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
 
 try:
     import qi
     NAO_SDK_AVAILABLE = True
-except ImportError:
+except (ImportError, SyntaxError):
+    # NAO SDK ni dostopen ali ima Python 2 syntax
     NAO_SDK_AVAILABLE = False
 
 
+def parse_choregraphe_project(project_path: str) -> List[Dict]:
+    """Parsira Choregraphe projekt (.pml) in vrne seznam behaviourjev"""
+    behaviors = []
+    
+    if not os.path.exists(project_path):
+        return behaviors
+    
+    # Najdi .pml datoteko (Choregraphe project file)
+    pml_files = [f for f in os.listdir(project_path) if f.endswith('.pml')]
+    
+    if not pml_files:
+        return behaviors
+    
+    pml_file = os.path.join(project_path, pml_files[0])
+    
+    try:
+        tree = ET.parse(pml_file)
+        root = tree.getroot()
+        
+        # Parsira "Diagram" elemente (behaviourji)
+        for box in root.findall('.//Box'):
+            name = box.get('name', 'Unknown')
+            id_attr = box.get('id', '')
+            
+            # Preskoči manifest in internalne boxe
+            if name != 'manifest' and not name.startswith('__'):
+                behaviors.append({
+                    'name': name,
+                    'id': id_attr,
+                    'path': os.path.join(project_path, name)
+                })
+    except Exception as e:
+        print(f"Napaka pri parsiranju .pml datoteke: {e}")
+    
+    return behaviors
+
+
 def scan_behaviors_in_directory(path: str) -> List[str]:
-    """Skeni direktorij in najdi behavior datoteke (.xml, .behavior, itd.)"""
+    """Alternativna metoda: skeni direktorij in najdi behavior direktorije"""
     behaviors = []
     
     if not os.path.exists(path):
         return behaviors
     
     try:
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                # Iskalnik za behavior datoteke
-                if file.endswith(('.xml', '.behavior', '.cha')):
-                    # Pridobi relativno pot
-                    full_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(full_path, path)
-                    behaviors.append(rel_path)
+        for item in os.listdir(path):
+            full_path = os.path.join(path, item)
+            # Iskalnik za behavior direktorije (behavior_1, behavior_2, itd.)
+            if os.path.isdir(full_path) and item.startswith('behavior'):
+                behaviors.append(item)
     except Exception as e:
         print(f"Napaka pri skeniranju behaviourjev: {e}")
     
