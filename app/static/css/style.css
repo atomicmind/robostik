@@ -94,11 +94,6 @@ header {
     text-align: center;
 }
 
-/* Debug: highlight header image so we can confirm which file is rendered (remove after verification) */
-#header-logo {
-    outline: 3px solid #ff4d4d;
-    border-radius: 8px;
-}
 
 header h1 {
     font-size: 2.5em;
