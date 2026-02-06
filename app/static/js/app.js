@@ -233,7 +233,7 @@ function createBehaviourCard(behaviour) {
 async function startBehaviour(name, button) {
     button.disabled = true;
     button.classList.add('btn-disabled');
-    button.textContent = 'Zaganjam...';
+    button.textContent = '⏳';
     
     try {
         const response = await fetch(`${API_BASE}/behaviours/${name}/start`, {
@@ -253,7 +253,7 @@ async function startBehaviour(name, button) {
     } finally {
         button.disabled = false;
         button.classList.remove('btn-disabled');
-        button.textContent = '▶ Zaženi';
+        button.textContent = '▶';
     }
 }
 
@@ -263,7 +263,7 @@ async function startBehaviour(name, button) {
 async function stopBehaviour(name, button) {
     button.disabled = true;
     button.classList.add('btn-disabled');
-    button.textContent = 'Ustavljam...';
+    button.textContent = '⏳';
     
     try {
         const response = await fetch(`${API_BASE}/behaviours/${name}/stop`, {
@@ -283,7 +283,7 @@ async function stopBehaviour(name, button) {
     } finally {
         button.disabled = false;
         button.classList.remove('btn-disabled');
-        button.textContent = '⏹ Ustavi';
+        button.textContent = '⏹';
     }
 }
 
