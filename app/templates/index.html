@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboStik - NAO v6 Web Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 RoboStik</h1>
+            <p>NAO v6 Web Interface</p>
+        </header>
+
+        <main>
+            <!-- Status sekcija -->
+            <section class="status-section">
+                <h2>Stanje povezave</h2>
+                <div id="status-box" class="status-box disconnected">
+                    <p id="status-text">Preverjam povezavo...</p>
+                </div>
+            </section>
+
+            <!-- Behaviourji sekcija -->
+            <section class="behaviours-section">
+                <h2>Behaviourji</h2>
+                <div id="behaviours-container" class="behaviours-container">
+                    <p class="loading">Nalagam behaviourje...</p>
+                </div>
+            </section>
+
+            <!-- Log sekcija -->
+            <section class="log-section">
+                <h2>Dnevnik</h2>
+                <div id="log-container" class="log-container">
+                    <p class="log-entry info">Aplikacija zagnana</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Zavod Qualia | RoboStik MIT License</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
