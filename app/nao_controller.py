@@ -5,6 +5,8 @@ NAO Controller - Upravljanje NAO robota prek NAOqi SDK
 import os
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
+import zipfile
+import tempfile
 
 try:
     import qi
@@ -15,13 +17,13 @@ except (ImportError, SyntaxError):
 
 
 def parse_choregraphe_project(project_path: str) -> List[Dict]:
-    """Parsira Choregraphe projekt (.pml) in vrne seznam behaviourjev"""
+    """Parsira Choregraphe projekt (.pml) i vrne seznam behaviourjev"""
     behaviors = []
     
     if not os.path.exists(project_path):
         return behaviors
     
-    # Najdi .pml datoteko (Choregraphe project file)
+    # Najdi .pml datoteku (Choregraphe project file)
     pml_files = [f for f in os.listdir(project_path) if f.endswith('.pml')]
     
     if not pml_files:
@@ -33,25 +35,70 @@ def parse_choregraphe_project(project_path: str) -> List[Dict]:
         tree = ET.parse(pml_file)
         root = tree.getroot()
 
-        # Parsira samo BehaviorDescription elemente (dejanski behaviourji za NAO)
-        # To so tisti, na katere klikneš "play" v Choregraphe rootu
+        # Parsira BehaviorDescription elemente in njihove .xar datoteke
         for bd in root.findall('.//BehaviorDescription'):
             name = bd.get('name') or ''
             src = bd.get('src') or ''
-            if src and name:
-                behaviors.append({
-                    'name': name,
-                    'id': '',
-                    'path': os.path.join(project_path, src)
-                })
+            xar_attr = bd.get('xar') or ''
+            
+            if src and xar_attr:
+                # Pot do .xar datoteke
+                xar_path = os.path.join(project_path, src, xar_attr)
+                if os.path.exists(xar_path):
+                    # Ekstrahiraj in parsiraj inner .pml iz .xar (ZIP)
+                    inner_behaviors = _parse_xar_file(xar_path, src)
+                    behaviors.extend(inner_behaviors)
+                else:
+                    # Ako nema .xar, samo dodaj behavior kao fallback
+                    if name:
+                        behaviors.append({
+                            'name': name,
+                            'id': '',
+                            'path': os.path.join(project_path, src)
+                        })
     except Exception as e:
         print(f"Napaka pri parsiranju .pml datoteke: {e}")
 
-    # Fallback: če ni BehaviorDescription, skeniraj direktorije
+    # Fallback: ako nema behaviors, skeniraj direktorije
     if not behaviors:
         dir_behaviors = scan_behaviors_in_directory(project_path)
         behaviors = [{'name': b, 'path': os.path.join(project_path, b)} for b in dir_behaviors]
 
+    return behaviors
+
+
+def _parse_xar_file(xar_path: str, behavior_dir: str) -> List[Dict]:
+    """Ekstrahiraj i parsiraj Box elemente iz .xar ZIP datoteke"""
+    behaviors = []
+    
+    try:
+        # .xar je ZIP datoteka
+        with zipfile.ZipFile(xar_path, 'r') as zf:
+            # Traži .pml datoteke u ZIP-u
+            pml_files = [f for f in zf.namelist() if f.endswith('.pml')]
+            if not pml_files:
+                return behaviors
+            
+            pml_name = pml_files[0]
+            with zf.open(pml_name) as pml_file:
+                tree = ET.parse(pml_file)
+                root = tree.getroot()
+                
+                # Parsiraj root-level Box elemente (behaviors u Diagramu)
+                for box in root.findall('.//Box'):
+                    name = box.get('name', '').strip()
+                    id_attr = box.get('id', '')
+                    
+                    # Preskoči manifest i internalne boxe
+                    if name and name.lower() != 'manifest' and not name.startswith('__'):
+                        behaviors.append({
+                            'name': name,
+                            'id': id_attr,
+                            'path': os.path.join(behavior_dir, name)
+                        })
+    except Exception as e:
+        print(f"Napaka pri parsiranju .xar datoteke: {e}")
+    
     return behaviors
 
 
