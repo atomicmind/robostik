@@ -14,17 +14,25 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('RoboStik aplikacija zagnana');
     
     // Nastavi default folder path
-    document.getElementById('folderPath').value = '/home/atomicmind/tehno/nao/arni/test/';
+    const folderInput = document.getElementById('folderPath');
+    if (folderInput) {
+        folderInput.value = '/home/atomicmind/tehno/nao/arni/test/';
+    }
     
     // Gumb za skeniranje
-    document.getElementById('scanBtn').addEventListener('click', scanBehaviors);
+    const scanBtn = document.getElementById('scanBtn');
+    if (scanBtn) {
+        scanBtn.addEventListener('click', scanBehaviors);
+    }
     
     // Enter v input polju
-    document.getElementById('folderPath').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            scanBehaviors();
-        }
-    });
+    if (folderInput) {
+        folderInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                scanBehaviors();
+            }
+        });
+    }
     
     // Preveri stanje robota
     checkStatus();
