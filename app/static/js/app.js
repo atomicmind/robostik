@@ -24,6 +24,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (scanBtn) {
         scanBtn.addEventListener('click', openProjectDialog);
     }
+
+    // Naloži seznam dovoljenih poti (cross-platform)
+    const applyAllowedBtn = document.getElementById('applyAllowedBtn');
+    if (applyAllowedBtn) {
+        applyAllowedBtn.addEventListener('click', applyAllowedPath);
+    }
+    loadAllowedPaths();
+
+    // Knjižnica projektov na strežniku
+    const setLibraryRootBtn = document.getElementById('setLibraryRootBtn');
+    if (setLibraryRootBtn) {
+        setLibraryRootBtn.addEventListener('click', selectLibraryRoot);
+    }
+    const refreshLibraryBtn = document.getElementById('refreshLibraryBtn');
+    if (refreshLibraryBtn) {
+        refreshLibraryBtn.addEventListener('click', loadLibraryProjects);
+    }
+    const applyLibraryProjectBtn = document.getElementById('applyLibraryProjectBtn');
+    if (applyLibraryProjectBtn) {
+        applyLibraryProjectBtn.addEventListener('click', applyLibraryProject);
+    }
+    loadLibraryProjects();
     
     // Enter v input polju
     if (folderInput) {
@@ -192,6 +214,112 @@ async function openProjectDialog() {
             scanBtn.textContent = '📁 Odpri projekt';
         }
     }
+}
+
+async function loadAllowedPaths() {
+    const select = document.getElementById('allowedPathSelect');
+    if (!select) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/allowed-paths`);
+        const data = await response.json();
+
+        select.innerHTML = '';
+        if (!data.paths || data.paths.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'Ni nastavljenih poti';
+            select.appendChild(opt);
+            return;
+        }
+
+        data.paths.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Napaka pri nalaganju poti:', error);
+    }
+}
+
+function applyAllowedPath() {
+    const select = document.getElementById('allowedPathSelect');
+    const folderInput = document.getElementById('folderPath');
+    if (!select || !folderInput || !select.value) {
+        addLog('Ni izbrane poti', 'error');
+        return;
+    }
+    folderInput.value = select.value;
+    scanBehaviors(select.value);
+}
+
+async function selectLibraryRoot() {
+    const btn = document.getElementById('setLibraryRootBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Izbiram...';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/library-root/select`);
+        const data = await response.json();
+
+        if (data.success) {
+            addLog(`✓ Knjižnica nastavljena: ${data.path}`, 'success');
+            await loadLibraryProjects();
+        } else {
+            addLog(`✗ ${data.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('Napaka pri izbiri knjižnice:', error);
+        addLog('Napaka pri izbiri knjižnice', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '📚 Izberi knjižnico (na strežniku)';
+        }
+    }
+}
+
+async function loadLibraryProjects() {
+    const select = document.getElementById('libraryProjectSelect');
+    if (!select) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/library-projects`);
+        const data = await response.json();
+
+        select.innerHTML = '';
+        if (!data.projects || data.projects.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = data.message || 'Ni projektov';
+            select.appendChild(opt);
+            return;
+        }
+
+        data.projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.path;
+            opt.textContent = p.name;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Napaka pri nalaganju projektov:', error);
+    }
+}
+
+function applyLibraryProject() {
+    const select = document.getElementById('libraryProjectSelect');
+    const folderInput = document.getElementById('folderPath');
+    if (!select || !folderInput || !select.value) {
+        addLog('Ni izbranega projekta iz knjižnice', 'error');
+        return;
+    }
+    folderInput.value = select.value;
+    scanBehaviors(select.value);
 }
 
 /**

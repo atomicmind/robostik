@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
 import zipfile
 import tempfile
+import requests
 
 try:
     import qi
@@ -168,6 +169,15 @@ class NAOController:
     def get_behaviours(self) -> List[str]:
         """Vrne seznam razpoložljivih behaviourjev"""
         if not self.connected or not self.behavior_manager:
+            # Poskusi uporabiti bridge, če je nastavljen
+            bridge_url = os.getenv('BRIDGE_URL')
+            if bridge_url:
+                try:
+                    res = requests.get(bridge_url.rstrip('/') + '/bridge/behaviours', timeout=5)
+                    if res.ok:
+                        return res.json().get('behaviours', [])
+                except Exception as e:
+                    print(f"Bridge napaka pri pridobivanju behaviourjev: {e}")
             # Mock mode: vrni testne behaviourje
             return [
                 "animations/Stand/Gestures/Hey_1",
@@ -185,6 +195,17 @@ class NAOController:
     def start_behaviour(self, behaviour_name: str) -> Dict:
         """Zaženi behaviour"""
         if not self.connected or not self.behavior_manager:
+            # Poskusi bridge, če je nastavljen
+            bridge_url = os.getenv('BRIDGE_URL')
+            if bridge_url:
+                try:
+                    res = requests.post(bridge_url.rstrip('/') + f'/bridge/behaviours/{behaviour_name}/start', timeout=5)
+                    if res.ok:
+                        return {"success": True, "message": f"Zažen preko bridge: {behaviour_name}", "behaviour": behaviour_name}
+                    else:
+                        return {"success": False, "message": res.text, "behaviour": behaviour_name}
+                except Exception as e:
+                    return {"success": False, "message": str(e), "behaviour": behaviour_name}
             return {
                 "success": False,
                 "message": "Ni povezave z NAO robotom",
@@ -208,6 +229,16 @@ class NAOController:
     def stop_behaviour(self, behaviour_name: str) -> Dict:
         """Ustavi behaviour"""
         if not self.connected or not self.behavior_manager:
+            bridge_url = os.getenv('BRIDGE_URL')
+            if bridge_url:
+                try:
+                    res = requests.post(bridge_url.rstrip('/') + f'/bridge/behaviours/{behaviour_name}/stop', timeout=5)
+                    if res.ok:
+                        return {"success": True, "message": f"Ustavljeno preko bridge: {behaviour_name}", "behaviour": behaviour_name}
+                    else:
+                        return {"success": False, "message": res.text, "behaviour": behaviour_name}
+                except Exception as e:
+                    return {"success": False, "message": str(e), "behaviour": behaviour_name}
             return {
                 "success": False,
                 "message": "Ni povezave z NAO robotom",
