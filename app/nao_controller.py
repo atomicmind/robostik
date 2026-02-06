@@ -33,52 +33,21 @@ def parse_choregraphe_project(project_path: str) -> List[Dict]:
         tree = ET.parse(pml_file)
         root = tree.getroot()
 
-        # 1) Parsiraj BehaviorDescription elementi (vsak lahko predstavlja behavior/mapo)
+        # Parsira samo BehaviorDescription elemente (dejanski behaviourji za NAO)
+        # To so tisti, na katere klikneš "play" v Choregraphe rootu
         for bd in root.findall('.//BehaviorDescription'):
             name = bd.get('name') or ''
             src = bd.get('src') or ''
-            if src:
-                # Če je ime generično (npr. "behavior"), uporabimo src kot bolj informativen name
-                display_name = name if name and name.lower() != 'behavior' else src
-                if display_name and display_name not in [b['name'] for b in behaviors]:
-                    behaviors.append({
-                        'name': display_name,
-                        'id': '',
-                        'path': os.path.join(project_path, src)
-                    })
-
-        # 2) Parsira "Resources/File" elemente za .crg/.xar kot možne behaviourje
-        for file_elem in root.findall('.//Resources/File'):
-            src = file_elem.get('src') or ''
-            name = file_elem.get('name') or ''
-            lower = src.lower()
-            if lower.endswith('.crg') or lower.endswith('.xar') or 'behavior' in lower:
-                # Uporabimo name, če obstaja, sicer filename
-                display_name = name or os.path.splitext(os.path.basename(src))[0]
-                if display_name and display_name not in [b['name'] for b in behaviors]:
-                    behaviors.append({
-                        'name': display_name,
-                        'id': '',
-                        'path': os.path.join(project_path, src)
-                    })
-
-        # 3) Parsira "Box" elemente (diagram nodes) kot dodatne behaviourje
-        for box in root.findall('.//Box'):
-            name = box.get('name', '').strip()
-            id_attr = box.get('id', '')
-
-            # Preskoči manifest in internalne boxe
-            if name and name.lower() != 'manifest' and not name.startswith('__'):
-                if name not in [b['name'] for b in behaviors]:
-                    behaviors.append({
-                        'name': name,
-                        'id': id_attr,
-                        'path': os.path.join(project_path, name)
-                    })
+            if src and name:
+                behaviors.append({
+                    'name': name,
+                    'id': '',
+                    'path': os.path.join(project_path, src)
+                })
     except Exception as e:
         print(f"Napaka pri parsiranju .pml datoteke: {e}")
 
-    # Če ni najdenih behaviourjev v .pml, uporabimo fallback skeniranje map
+    # Fallback: če ni BehaviorDescription, skeniraj direktorije
     if not behaviors:
         dir_behaviors = scan_behaviors_in_directory(project_path)
         behaviors = [{'name': b, 'path': os.path.join(project_path, b)} for b in dir_behaviors]
