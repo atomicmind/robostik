@@ -6,6 +6,7 @@ Main entry point za Flask aplikacijo
 
 import os
 import sys
+import logging
 from dotenv import load_dotenv
 
 # Naloži okoljske spremenljivke iz .env
@@ -21,5 +22,7 @@ from app import create_app
 
 if __name__ == '__main__':
     app = create_app()
+    # Utišaj werkzeug access loge (GET /api/status ipd.)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     debug = os.getenv('FLASK_ENV') == 'development'
     app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)

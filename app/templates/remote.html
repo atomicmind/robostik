@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboStik Remote</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/robot-favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/logo-z-odsevom.png') }}" alt="Qualia Logo" class="qualia-logo with-baked-reflection" id="header-logo">
+                </div>
+                <div class="header-text">
+                    <h1>🤖 RoboStik Remote</h1>
+                    <p>Oddaljeno upravljanje</p>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="status-section">
+                <h2>Stanje povezave</h2>
+                <div id="status-box" class="status-box disconnected">
+                    <p id="status-text">Preverjam povezavo...</p>
+                </div>
+            </section>
+
+            <section class="behaviours-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                    <h2>Obnašanja</h2>
+                    <button id="refreshRemoteBtn" class="btn-scan">🔄 Osveži</button>
+                </div>
+                <div id="behaviours-container" class="behaviours-container">
+                    <p class="loading">Čakam na naložen projekt na admin strani...</p>
+                </div>
+            </section>
+
+            <section class="log-section">
+                <h2>Dnevnik</h2>
+                <div id="log-container" class="log-container">
+                    <p class="log-entry info">Remote aplikacija zagnana</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Arnold Marko | Zavod Qualia</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/remote.js') }}"></script>
+</body>
+</html>

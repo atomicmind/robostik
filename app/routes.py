@@ -3,11 +3,15 @@ RoboStik API Routes
 REST API endpoint-i za upravljanje NAO robota
 """
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, redirect
 import os
+import platform
 import shutil
 import subprocess
 from app.nao_controller import get_nao_controller, parse_choregraphe_project, scan_behaviors_in_directory
+
+# In-memory cache of last scanned behaviours
+_current_behaviours = []
 
 
 # Ustvari blueprint za root (templates)
@@ -16,8 +20,30 @@ root_bp = Blueprint('root', __name__)
 
 @root_bp.route('/', methods=['GET'])
 def home():
-    """Vrne spletni vmesnik"""
-    return render_template('index.html')
+    """Remote UI (privzeto)"""
+    return redirect('/remote')
+
+
+@root_bp.route('/admin', methods=['GET'])
+def admin():
+    """Admin UI za lokalno upravljanje"""
+    server_ip = request.host.split(':')[0]
+    if server_ip in ('127.0.0.1', 'localhost', '::1'):
+        try:
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8', 80))
+            server_ip = s.getsockname()[0]
+            s.close()
+        except Exception:
+            pass
+    return render_template('admin.html', server_ip=server_ip)
+
+
+@root_bp.route('/remote', methods=['GET'])
+def remote():
+    """Remote UI za oddaljen dostop"""
+    return render_template('remote.html')
 
 
 # Ustvari blueprint za API
@@ -57,6 +83,15 @@ def get_behaviours():
     })
 
 
+@api_bp.route('/current-behaviours', methods=['GET'])
+def current_behaviours():
+    """Vrne zadnje skenirane behaviourje (admin scan)."""
+    return jsonify({
+        "behaviours": _current_behaviours,
+        "count": len(_current_behaviours)
+    })
+
+
 @api_bp.route('/behaviours/<behaviour_name>/start', methods=['POST'])
 def start_behaviour(behaviour_name):
     """Zaženi behaviour"""
@@ -78,6 +113,7 @@ def stop_behaviour(behaviour_name):
 @api_bp.route('/scan-folder', methods=['POST'])
 def scan_folder():
     """Skenira Choregraphe projekt in najde behaviourje"""
+    global _current_behaviours
     data = request.get_json()
     folder_path = data.get('path', '')
     
@@ -103,6 +139,8 @@ def scan_folder():
     if not behaviors:
         dir_behaviors = scan_behaviors_in_directory(folder_path)
         behaviors = [{'name': b, 'path': os.path.join(folder_path, b)} for b in dir_behaviors]
+
+    _current_behaviours = behaviors
     
     return jsonify({
         "success": True,
@@ -118,6 +156,39 @@ def open_project_dialog():
     Po izbiri tudi skenira projekt (poskusi .pml parser, nato fallback na scan directory)
     in vrne seznam najdenih behaviourjev v odgovoru.
     """
+    global _current_behaviours
+    # Windows: uporabi tkinter file dialog, če je na voljo
+    is_windows = os.name == 'nt' or platform.system().lower().startswith('win') or os.getenv('OS') == 'Windows_NT'
+    if is_windows:
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            selected = filedialog.askdirectory(title='Izberi Choregraphe projekt')
+            root.destroy()
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "message": f"Windows dialog ni na voljo: {e}. Vnesi pot ročno in klikni 'Skeniraj'."
+            }), 500
+
+        if not selected:
+            return jsonify({"success": False, "message": "Izbira preklicana"}), 400
+        if not os.path.exists(selected):
+            return jsonify({"success": False, "message": f"Izbrana pot ne obstaja: {selected}"}), 400
+
+        behaviors = parse_choregraphe_project(selected)
+        if not behaviors:
+            dir_behaviors = scan_behaviors_in_directory(selected)
+            behaviors = [{'name': b, 'path': os.path.join(selected, b)} for b in dir_behaviors]
+
+        _current_behaviours = behaviors
+
+        return jsonify({"success": True, "path": selected, "behaviors": behaviors})
+
     # Preveri, kateri dialog je na voljo
     dialog_cmd = None
     if shutil.which('zenity'):
@@ -126,7 +197,11 @@ def open_project_dialog():
         dialog_cmd = ['kdialog', '--getexistingdirectory', '--title', 'Izberi Choregraphe projekt']
 
     if not dialog_cmd:
-        return jsonify({"success": False, "message": "Ni nameščen zenity ali kdialog na sistemu"}), 500
+        system_info = f"system={platform.system()}, os.name={os.name}, OS={os.getenv('OS')}"
+        return jsonify({
+            "success": False,
+            "message": f"Ni nameščen zenity ali kdialog na sistemu ({system_info})"
+        }), 500
 
     try:
         res = subprocess.run(dialog_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60)
@@ -142,6 +217,10 @@ def open_project_dialog():
             dir_behaviors = scan_behaviors_in_directory(selected)
             behaviors = [{'name': b, 'path': os.path.join(selected, b)} for b in dir_behaviors]
 
+        _current_behaviours = behaviors
+
         return jsonify({"success": True, "path": selected, "behaviors": behaviors})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+

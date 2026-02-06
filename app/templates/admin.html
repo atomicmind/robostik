@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoboStik - NAO v6 Web Interface</title>
+    <title>RoboStik Admin</title>
     <link rel="icon" href="{{ url_for('static', filename='images/robot-favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -15,38 +15,22 @@
                     <img src="{{ url_for('static', filename='images/logo-z-odsevom.png') }}" alt="Qualia Logo" class="qualia-logo with-baked-reflection" id="header-logo">
                 </div>
                 <div class="header-text">
-                    <h1>🤖 RoboStik</h1>
-                    <p>NAO v6 Web Interface</p>
+                    <h1>🤖 RoboStik Admin</h1>
+                    <p>Lokalno upravljanje projekta</p>
+                    <p class="loading" style="margin-top: 6px; color: #fff;">Za oddaljeni dostop vpišite:<br><strong>{{ server_ip }}:5000/remote</strong></p>
                 </div>
             </div>
         </header>
 
         <main>
-            {% if is_local %}
-            <!-- Folder Picker sekcija (samo na strežniku) -->
             <section class="folder-picker-section">
                 <h2>Izbira projekta</h2>
                 <div class="folder-picker">
                     <input type="text" id="folderPath" placeholder="Pot do Choregraphe projekta (npr. /home/user/nao/projekt/test)" class="folder-input">
                     <button id="scanBtn" class="btn-scan">📁 Odpri projekt</button>
                 </div>
-                <div class="folder-picker" style="margin-top: 10px;">
-                    <select id="allowedPathSelect" class="folder-input"></select>
-                    <button id="applyAllowedBtn" class="btn-scan">✅ Uporabi</button>
-                </div>
-                <div class="folder-picker" style="margin-top: 10px;">
-                    <button id="setLibraryRootBtn" class="btn-scan">📚 Izberi knjižnico (na strežniku)</button>
-                    <button id="refreshLibraryBtn" class="btn-scan">🔄 Osveži</button>
-                </div>
-                <div class="folder-picker" style="margin-top: 10px;">
-                    <select id="libraryProjectSelect" class="folder-input"></select>
-                    <button id="applyLibraryProjectBtn" class="btn-scan">✅ Naloži projekt</button>
-                </div>
-                <p class="loading" style="margin-top: 6px;">Mobilni dostop: izberi mapo s seznama dovoljenih poti.</p>
             </section>
-            {% endif %}
 
-            <!-- Status sekcija -->
             <section class="status-section">
                 <h2>Stanje povezave</h2>
                 <div id="status-box" class="status-box disconnected">
@@ -54,16 +38,17 @@
                 </div>
             </section>
 
-            <!-- Behaviourji sekcija -->
             <section class="behaviours-section">
                 <h2>Obnašanja</h2>
                 <div id="behaviours-container" class="behaviours-container">
                     <p class="loading">Izberite projekt in skenirajte obnašanja...</p>
                 </div>
             </section>
+
+            <section class="log-section">
                 <h2>Dnevnik</h2>
                 <div id="log-container" class="log-container">
-                    <p class="log-entry info">Aplikacija je zagnana</p>
+                    <p class="log-entry info">Admin aplikacija zagnana</p>
                 </div>
             </section>
         </main>
@@ -73,6 +58,6 @@
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>
