@@ -5,6 +5,8 @@ REST API endpoint-i za upravljanje NAO robota
 
 from flask import Blueprint, jsonify, render_template, request
 import os
+import shutil
+import subprocess
 from app.nao_controller import get_nao_controller, parse_choregraphe_project, scan_behaviors_in_directory
 
 
@@ -108,3 +110,28 @@ def scan_folder():
         "behaviors": behaviors,
         "path": folder_path
     })
+
+
+@api_bp.route('/open-project', methods=['GET'])
+def open_project_dialog():
+    """Odpre nativni file dialog (zenity/kdialog) za izbiro mape na lokalnem sistemu"""
+    # Preveri, kateri dialog je na voljo
+    dialog_cmd = None
+    if shutil.which('zenity'):
+        dialog_cmd = ['zenity', '--file-selection', '--directory', '--title', 'Izberi Choregraphe projekt']
+    elif shutil.which('kdialog'):
+        dialog_cmd = ['kdialog', '--getexistingdirectory', '--title', 'Izberi Choregraphe projekt']
+
+    if not dialog_cmd:
+        return jsonify({"success": False, "message": "Ni nameščen zenity ali kdialog na sistemu"}), 500
+
+    try:
+        res = subprocess.run(dialog_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60)
+        selected = res.stdout.strip()
+        if not selected:
+            return jsonify({"success": False, "message": "Izbira preklicana"}), 400
+        if not os.path.exists(selected):
+            return jsonify({"success": False, "message": f"Izbrana pot ne obstaja: {selected}"}), 400
+        return jsonify({"success": True, "path": selected})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500

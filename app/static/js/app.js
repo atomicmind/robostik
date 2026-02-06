@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
         folderInput.value = '/home/atomicmind/tehno/nao/arni/test/';
     }
     
-    // Gumb za skeniranje
+    // Gumb za odpiranje projekta (native folder dialog)
     const scanBtn = document.getElementById('scanBtn');
     if (scanBtn) {
-        scanBtn.addEventListener('click', scanBehaviors);
+        scanBtn.addEventListener('click', openProjectDialog);
     }
     
     // Enter v input polju
@@ -90,7 +90,7 @@ async function scanBehaviors() {
     
     const scanBtn = document.getElementById('scanBtn');
     scanBtn.disabled = true;
-    scanBtn.textContent = '⏳ Skeniram...';
+    scanBtn.textContent = '⏳ Skeniram...'; // used when invoked programmatically while scanning behaviours
     
     try {
         const response = await fetch(`${API_BASE}/scan-folder`, {
@@ -119,7 +119,7 @@ async function scanBehaviors() {
             '<p class="loading">❌ Napaka pri povezavi s strežnikom</p>';
     } finally {
         scanBtn.disabled = false;
-        scanBtn.textContent = '� Skeniraj behaviourje';
+        scanBtn.textContent = '📁 Odpri projekt';
     }
 }
 
@@ -141,6 +141,42 @@ function displayBehaviors(behaviors) {
         const card = createBehaviourCard(name);
         container.appendChild(card);
     });
+}
+
+/**
+ * Odpre nativni file dialog na strežniku in nastavi pot
+ */
+async function openProjectDialog() {
+    const scanBtn = document.getElementById('scanBtn');
+    if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = '⏳ Odpravljam...';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/open-project`);
+        const data = await response.json();
+
+        if (data.success) {
+            const folderInput = document.getElementById('folderPath');
+            if (folderInput) {
+                folderInput.value = data.path;
+            }
+            addLog(`✓ Izbrana mapa: ${data.path}`, 'success');
+            // Po izbiri avtomatsko skeniraj behaviourje
+            await scanBehaviors();
+        } else {
+            addLog(`✗ ${data.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('Napaka pri odpiranju dialoga:', error);
+        addLog('Napaka pri odpiranju dialoga', 'error');
+    } finally {
+        if (scanBtn) {
+            scanBtn.disabled = false;
+            scanBtn.textContent = '📁 Odpri projekt';
+        }
+    }
 }
 
 /**
