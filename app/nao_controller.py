@@ -79,21 +79,24 @@ def _parse_xar_file(xar_path: str, behavior_dir: str) -> List[Dict]:
         # Registriraj Choregraphe namespace
         ns = {'ch': 'http://www.ald.softbankrobotics.com/schema/choregraphe/project.xsd'}
         
-        # Traži samo Box elemente koji su direktne dijete Diagram elementa (top-level behaviors)
-        diagrams = root.findall('.//ch:Diagram', ns)
-        for diagram in diagrams:
-            # Direktne dijete BoxSection / Box
-            for box in diagram.findall('ch:BoxSection/ch:Box', ns):
-                name = box.get('name', '').strip()
-                id_attr = box.get('id', '')
-                
-                # Preskoči root i internalne boxe
-                if name and name.lower() != 'root' and not name.startswith('__'):
-                    behaviors.append({
-                        'name': name,
-                        'id': id_attr,
-                        'path': os.path.join(behavior_dir, name)
-                    })
+        # Traži Box elemente direktno u Diagram elementima
+        # (ne u BoxSection koji se koristi za interni raspored)
+        boxes = root.findall('.//ch:Diagram/ch:Box', ns)
+        
+        seen_names = set()  # Praćenje jedinstvenih imena za izbjegavanje duplikata
+        for box in boxes:
+            name = box.get('name', '').strip()
+            id_attr = box.get('id', '')
+            
+            # Preskoči root, interne boxe (__)  i duplikate
+            if (name and name.lower() != 'root' and 
+                not name.startswith('__') and name not in seen_names):
+                behaviors.append({
+                    'name': name,
+                    'id': id_attr,
+                    'path': os.path.join(behavior_dir, name)
+                })
+                seen_names.add(name)
     except Exception as e:
         print(f"Napaka pri parsiranju .xar datoteke: {e}")
     
