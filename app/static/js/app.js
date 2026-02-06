@@ -5,6 +5,7 @@
 
 const API_BASE = '/api';
 let behaviourRunning = {};
+let currentFolderPath = '';
 
 /**
  * Inicijalizacija aplikacije
@@ -12,11 +13,21 @@ let behaviourRunning = {};
 document.addEventListener('DOMContentLoaded', function() {
     console.log('RoboStik aplikacija zagnana');
     
+    // Nastavi default folder path
+    document.getElementById('folderPath').value = '/home/atomicmind/tehno/nao/arni/test/';
+    
+    // Gumb za skeniranje
+    document.getElementById('scanBtn').addEventListener('click', scanBehaviors);
+    
+    // Enter v input polju
+    document.getElementById('folderPath').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            scanBehaviors();
+        }
+    });
+    
     // Preveri stanje robota
     checkStatus();
-    
-    // Naloži behaviourje
-    loadBehaviours();
     
     // Osveži vsakih 5 sekund
     setInterval(checkStatus, 5000);
@@ -51,34 +62,67 @@ async function checkStatus() {
 }
 
 /**
- * Naloži seznam behaviourjev
+ * Skeniraj behaviors iz izbrane mape
  */
-async function loadBehaviours() {
+async function scanBehaviors() {
+    const folderPath = document.getElementById('folderPath').value.trim();
+    
+    if (!folderPath) {
+        addLog('Vnesite pot do projekta', 'error');
+        return;
+    }
+    
+    const scanBtn = document.getElementById('scanBtn');
+    scanBtn.disabled = true;
+    scanBtn.textContent = '⏳ Skeniram...';
+    
     try {
-        const response = await fetch(`${API_BASE}/behaviours`);
-        const data = await response.json();
-        
-        const container = document.getElementById('behaviours-container');
-        container.innerHTML = '';
-        
-        if (data.behaviours.length === 0) {
-            container.innerHTML = '<p class="loading">Ni razpoložljivih behaviourjev</p>';
-            return;
-        }
-        
-        data.behaviours.forEach(behaviour => {
-            const card = createBehaviourCard(behaviour);
-            container.appendChild(card);
+        const response = await fetch(`${API_BASE}/scan-folder`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ path: folderPath })
         });
         
-        addLog(`Naloženih ${data.count} behaviourjev`, 'success');
-    } catch (error) {
-        console.error('Napaka pri nalaganju behaviourjev:', error);
-        addLog('Napaka pri nalaganju behaviourjev', 'error');
+        const data = await response.json();
         
-        const container = document.getElementById('behaviours-container');
-        container.innerHTML = '<p class="loading">Napaka pri nalaganju behaviourjev</p>';
+        if (data.success) {
+            currentFolderPath = data.path;
+            displayBehaviors(data.behaviors);
+            addLog(`✓ Naloženih ${data.behaviors.length} behaviourjev`, 'success');
+        } else {
+            addLog(`✗ Napaka: ${data.message}`, 'error');
+            document.getElementById('behaviours-container').innerHTML = 
+                `<p class="loading">❌ ${data.message}</p>`;
+        }
+    } catch (error) {
+        console.error('Napaka pri skeniranju:', error);
+        addLog('Napaka pri skeniranju behaviourjev', 'error');
+        document.getElementById('behaviours-container').innerHTML = 
+            '<p class="loading">❌ Napaka pri povezavi s strežnikom</p>';
+    } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = '🔍 Skeniraj behaviourje';
     }
+}
+
+/**
+ * Prikaži behaviors kot kartice
+ */
+function displayBehaviors(behaviors) {
+    const container = document.getElementById('behaviours-container');
+    container.innerHTML = '';
+    
+    if (behaviors.length === 0) {
+        container.innerHTML = '<p class="loading">Ni najdenih behaviourjev</p>';
+        return;
+    }
+    
+    behaviors.forEach(behavior => {
+        const card = createBehaviourCard(behavior);
+        container.appendChild(card);
+    });
 }
 
 /**

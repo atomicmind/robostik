@@ -12,6 +12,28 @@ except ImportError:
     NAO_SDK_AVAILABLE = False
 
 
+def scan_behaviors_in_directory(path: str) -> List[str]:
+    """Skeni direktorij in najdi behavior datoteke (.xml, .behavior, itd.)"""
+    behaviors = []
+    
+    if not os.path.exists(path):
+        return behaviors
+    
+    try:
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                # Iskalnik za behavior datoteke
+                if file.endswith(('.xml', '.behavior', '.cha')):
+                    # Pridobi relativno pot
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, path)
+                    behaviors.append(rel_path)
+    except Exception as e:
+        print(f"Napaka pri skeniranju behaviourjev: {e}")
+    
+    return sorted(behaviors)
+
+
 class NAOController:
     """Kontroler za upravljanje NAO robota"""
     
@@ -58,7 +80,13 @@ class NAOController:
     def get_behaviours(self) -> List[str]:
         """Vrne seznam razpoložljivih behaviourjev"""
         if not self.connected or not self.behavior_manager:
-            return []
+            # Mock mode: vrni testne behaviourje
+            return [
+                "animations/Stand/Gestures/Hey_1",
+                "animations/Stand/Gestures/Hello_1",
+                "animations/Stand/Waiting/Think_1",
+                "animations/Sit/Emotions/Positive/Laugh_1"
+            ]
         
         try:
             return self.behavior_manager.getInstalledBehaviors()
