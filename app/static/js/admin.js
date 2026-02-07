@@ -19,6 +19,47 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.key === 'Enter') scanBehaviors();
         });
     }
+
+    // Connect / Disconnect button
+    const connectBtn = document.getElementById('connectNaoBtn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', async function() {
+            const connected = connectBtn.dataset.connected === '1';
+            const naoIp = document.getElementById('naoIp').value.trim();
+            const naoPort = parseInt(document.getElementById('naoPort').value, 10) || 9559;
+
+            connectBtn.disabled = true;
+            try {
+                if (!connected) {
+                    const r = await fetch(`${API_BASE}/connect`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ip: naoIp, port: naoPort })
+                    });
+                    const data = await r.json();
+                    if (data.success) {
+                        addLog('✓ Povezava uspešna', 'success');
+                    } else {
+                        addLog(`✗ Povezava ni uspela: ${data.message}`, 'error');
+                    }
+                } else {
+                    const r = await fetch(`${API_BASE}/disconnect`, { method: 'POST' });
+                    const data = await r.json();
+                    if (data.success) {
+                        addLog('✓ Prekinjena povezava', 'success');
+                    } else {
+                        addLog(`✗ Napaka pri prekinitvi: ${data.message}`, 'error');
+                    }
+                }
+            } catch (err) {
+                console.error('Napaka pri povezanju/prekinitvi:', err);
+                addLog('Napaka pri povezanju/prekinitvi', 'error');
+            } finally {
+                connectBtn.disabled = false;
+                await checkStatus();
+            }
+        });
+    }
 });
 
 async function checkStatus() {
@@ -33,10 +74,21 @@ async function checkStatus() {
             statusBox.classList.remove('disconnected');
             statusBox.classList.add('connected');
             statusText.textContent = '✓ ' + data.message;
+            // Update connect button to 'Prekini'
+            const connectBtn = document.getElementById('connectNaoBtn');
+            if (connectBtn) {
+                connectBtn.textContent = '✖ Prekini';
+                connectBtn.dataset.connected = '1';
+            }
         } else {
             statusBox.classList.remove('connected');
             statusBox.classList.add('disconnected');
             statusText.textContent = '✗ ' + data.message;
+            const connectBtn = document.getElementById('connectNaoBtn');
+            if (connectBtn) {
+                connectBtn.textContent = '🔌 Poveži';
+                connectBtn.dataset.connected = '0';
+            }
         }
     } catch (error) {
         console.error('Napaka pri preverjanju statusa:', error);

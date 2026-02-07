@@ -72,6 +72,31 @@ def status():
     return jsonify(controller.get_status())
 
 
+@api_bp.route('/connect', methods=['POST'])
+def connect_nao():
+    """Nastavi IP/port in poskusi povezavo z NAO."""
+    data = request.get_json() or {}
+    nao_ip = (data.get('ip') or '127.0.0.1').strip()
+    try:
+        nao_port = int(data.get('port') or 9559)
+    except Exception:
+        nao_port = 9559
+
+    controller = get_nao_controller()
+    result = controller.connect_to(nao_ip, nao_port)
+    status_code = 200 if result.get('success') else 400
+    return jsonify(result), status_code
+
+
+@api_bp.route('/disconnect', methods=['POST'])
+def disconnect_nao():
+    """Prekini povezavo z NAO."""
+    controller = get_nao_controller()
+    result = controller.disconnect()
+    status_code = 200 if result.get('success') else 400
+    return jsonify(result), status_code
+
+
 @api_bp.route('/behaviours', methods=['GET'])
 def get_behaviours():
     """Vrne seznam razpoložljivih behaviourjev"""

@@ -155,6 +155,45 @@ class NAOController:
             print(f"Napaka pri povezavi z NAO: {e}")
             self.connected = False
             return False
+
+    def connect_to(self, nao_ip: str, nao_port: int) -> dict:
+        """Set NAO IP/port and attempt connection.
+
+        Returns a dict with keys: success (bool), message (str), nao_ip, nao_port
+        """
+        self.nao_ip = nao_ip
+        self.nao_port = int(nao_port)
+        # Try to connect using SDK if available
+        if NAO_SDK_AVAILABLE:
+            try:
+                ok = self._connect()
+                if ok:
+                    return {"success": True, "message": "Povezano z NAO robotom", "nao_ip": self.nao_ip, "nao_port": self.nao_port}
+                else:
+                    return {"success": False, "message": "Napaka pri povezavi z NAO", "nao_ip": self.nao_ip, "nao_port": self.nao_port}
+            except Exception as e:
+                return {"success": False, "message": str(e), "nao_ip": self.nao_ip, "nao_port": self.nao_port}
+        else:
+            # SDK not available locally; store IP/port and rely on bridge for operations
+            self.connected = False
+            return {"success": True, "message": "NAO IP nastavljen (uporabite bridge za dejanske klice)", "nao_ip": self.nao_ip, "nao_port": self.nao_port}
+
+    def disconnect(self) -> dict:
+        """Disconnect from NAO (close session if present)"""
+        try:
+            if self.session:
+                try:
+                    # qi.Session may not have a close method; attempt safe cleanup
+                    if hasattr(self.session, 'close'):
+                        self.session.close()
+                except Exception:
+                    pass
+            self.session = None
+            self.behavior_manager = None
+            self.connected = False
+            return {"success": True, "message": "Odvezano od NAO"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
     
     def get_status(self) -> Dict:
         """Vrne stanje robota in povezave"""
